@@ -1,48 +1,45 @@
-const Block = require('./models/Block');
-const Transaction = require('./models/Transaction');
-const UTXO = require('./models/UTXO');
-const db = require('./db');
-const {PUBLIC_KEY} = require('./config');
-const TARGET_DIFFICULTY = BigInt("0x0" + "F".repeat(63));
-const BLOCK_REWARD = 10;
+// (1) Import Dependencies
+const Block = require('./models/block.js') // Import Block Class Constructor
+const database = require('./database.js') // Import Database
+const TARGET_DIFFICULTY = BigInt('0x00' + 'F'.repeat(62)) // Create Target Difficulty - Convert to Big Integers so we can compare Hash() values
 
-let mining = true;
-mine();
+// (3) Create Boolean for start/stop mining functions
+let isMining = false
+// mine()
 
+// (4) Create startMining/stopMining Functions
 function startMining() {
-  mining = true;
-  mine();
+	isMining = true
+	mine()
 }
 
 function stopMining() {
-  mining = false;
+	isMining = false
 }
 
+// (2) Create mining function which will want to add block to the blockchain every so often [Moved to own file]
 function mine() {
-  if(!mining) return;
+	if (!isMining) return // (C) If NOT mining === true will prevent mine function from executing in setTimeOut
 
-  const block = new Block();
+	const block = new Block() // (D) Create New Block using constructor class
 
-  // TODO: add transactions from the mempool
+	while (BigInt('0x' + block.hash()) >= TARGET_DIFFICULTY) {
+		// console.log(block.hash())
+		block.nonce++ // Increment block nonce number until we find a hash value that is less difficulty
+	}
 
-  const coinbaseUTXO = new UTXO(PUBLIC_KEY, BLOCK_REWARD);
-  const coinbaseTX = new Transaction([], [coinbaseUTXO]);
-  block.addTransaction(coinbaseTX);
+	database.blockchain.addBlock(block) // (A) Add new Block to Blockchain by using addBlock() method Block class we created
 
-  while(BigInt('0x' + block.hash()) >= TARGET_DIFFICULTY) {
-    block.nonce++;
-  }
+	console.log(
+		`Block ${database.blockchain.blockHeight()} is added to blockchain. Block Hash ${block.hash()} at nonce ${
+			block.nonce
+		}.`
+	)
 
-  block.execute();
-
-  db.blockchain.addBlock(block);
-
-  console.log(`Mined block #${db.blockchain.blockHeight()} with a hash of ${block.hash()} at nonce ${block.nonce}`);
-
-  setTimeout(mine, 2500);
+	setTimeout(mine, 5000) // (B) Use setTimeOut() to mine a new Block every 5 seconds
 }
 
 module.exports = {
-  startMining,
-  stopMining,
-};
+	startMining,
+	stopMining,
+}

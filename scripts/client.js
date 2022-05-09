@@ -1,8 +1,14 @@
-const jayson = require('jayson');
-const {PORT} = require('../config');
+// Import Dependencies
+const { PORT } = require('../config.js') // (3) Import config.js
 
-const client = jayson.client.http({
-  port: PORT
-});
+// Import Node Modules
+const jayson = require('jayson') // (1) Import Jayson Node Module
 
-module.exports = client;
+// -------------- Most of Code Below Comes from Jayson Documentation but Altered for our Use  --------------
+
+// (2) Create a Client
+const client = jayson.Client.http({
+	port: PORT,
+})
+
+module.exports = client
